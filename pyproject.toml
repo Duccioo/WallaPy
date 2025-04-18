@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wallapy"
+version = "0.1.0"
+authors = [
+  { name="duccioo", email="your_email@example.com" }, # Sostituisci con la tua email se vuoi
+]
+description = "A Python tool to search Wallapop items."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.8" # Specifica una versione minima di Python
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet",
+]
+dependencies = [
+    "certifi==2025.1.31",
+    "charset-normalizer==3.4.1",
+    "fuzzywuzzy==0.18.0",
+    "idna==3.10",
+    "Levenshtein==0.27.1", # Nota: python-Levenshtein è un wrapper, Levenshtein è la libreria C
+    "pytz==2025.2", # Aggiunta dipendenza mancante
+    "RapidFuzz==3.13.0",
+    "requests==2.32.3",
+    "urllib3==2.4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/duccioo/WallaPy"
+Repository = "https://github.com/duccioo/WallaPy"
+
+[tool.setuptools.packages.find]
+where = ["src"]  # Cerca i pacchetti nella directory src
