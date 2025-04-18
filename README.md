@@ -126,6 +126,13 @@ except Exception as e:
 *   `config.py`: Stores configuration constants like the base API URL, fuzzy matching thresholds, and default HTTP headers.
 *   `exceptions.py`: Defines custom exceptions used by the library (e.g., `WallaPyRequestError`).
 
+## TODO
+- [ ] Pubblicarlo su PyPI
+- [ ] Aggiungere altri esempi di utilizzo
+- [ ] Inserire lo scraping via web in caso di errore API
+- [ ] Migliorare il matching delle parole
+
+
 ## License 📜
 
 This project is released under the Apache License 2.0. See the [LICENSE](LICENSE) file for more details.

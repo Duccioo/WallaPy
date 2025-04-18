@@ -9,14 +9,13 @@ logging.basicConfig(
 
 
 # Define search parameters
-product_name = "ps5 pro"
-keywords = ["pro", "console", "playstation", "ps5", "playstation 5"]
+product_name = "ps5"
+keywords = ["console", "playstation", "ps5", "playstation 5"]
 min_price = 100
-max_price = 800
-excluded_keywords = ["broken", "repair", "cracked screen", "rotto", "riparare"]
+max_price = 200
 max_items_to_fetch = 50  # Limit the number of ads to retrieve
 # order_by = "price_low_to_high"  # Sort by price ascending
-# time_filter = "lastWeek"
+time_filter = "lastWeek"
 
 # Execute the search
 try:
@@ -25,8 +24,8 @@ try:
         keywords=keywords,
         min_price=min_price,
         max_price=max_price,
-        excluded_keywords=excluded_keywords,
         max_total_items=max_items_to_fetch,
+        time_filter=time_filter,
     )
 
     # Print the found results
