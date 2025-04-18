@@ -14,7 +14,11 @@ from typing import List, Dict, Any, Optional
 from .utils import clean_text, contains_excluded_terms, make_link, validate_prices, tmz
 from .fetch_api import fetch_wallapop_items, setup_url
 from .config import FUZZY_THRESHOLDS, HEADERS
-from .exceptions import WallaPyConfigurationError  # Importa l'eccezione corretta
+from .exceptions import (
+    WallaPyConfigurationError,
+    WallaPyException,
+    WallaPyRequestError,
+)  # Importa l'eccezione corretta
 
 logger = logging.getLogger(__name__)
 
@@ -312,10 +316,6 @@ def check_wallapop(
         WallaPyRequestError
     ) as e:  # Cattura eccezioni specifiche se fetch_wallapop_items le lancia
         error_msg = f"Failed to fetch items from Wallapop: {e}"
-        logger.error(error_msg)
-        raise  # Rilancia l'eccezione specifica
-    except WallaPyParsingError as e:
-        error_msg = f"Failed to parse Wallapop response: {e}"
         logger.error(error_msg)
         raise  # Rilancia l'eccezione specifica
     except Exception as e:

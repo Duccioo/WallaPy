@@ -12,7 +12,11 @@ from urllib.parse import urlparse, parse_qs, urlencode
 from .request_handler import safe_request
 from .config import BASE_URL_WALLAPOP
 from .utils import clean_text
-from .exceptions import WallaPyRequestError, WallaPyParsingError  # Importa eccezioni
+from .exceptions import (
+    WallaPyRequestError,
+    WallaPyParsingError,
+    WallaPyException,
+)  # Importa eccezioni
 
 logger = logging.getLogger(__name__)
 
