@@ -49,6 +49,7 @@ def main():
             print(f"User ID: {user_info.get('userId', 'N/A')}")
             print(f"Username: {user_info.get('username', 'N/A')}")
             print(f"User link : {user_info.get('link', 'N/A')}")
+            print(f"User register date: {user_info.get('register_date', 'N/A')}")
             # print(f"Description: {ad.get('description', 'N/A')}") # Descrizione può essere lunga
     else:
         print("\nNo ads found matching the specified criteria.")

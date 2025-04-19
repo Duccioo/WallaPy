@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wallapy"
-version = "0.5.1"
+version = "0.5.2"
 authors = [
   { name="duccioo", email="meconcelliduccio@gmail.com" }, # Sostituisci con la tua email se vuoi
 ]

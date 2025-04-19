@@ -363,7 +363,21 @@ class WallaPyClient:
                             "is_top_profile": user_info.get("is_top_profile"),
                         }
 
-                        details_found_in_json = True
+                        timestamp_ms = user_info.get("register_date")
+                        if timestamp_ms:
+                            try:
+                                product_date_utc = datetime.datetime.fromtimestamp(
+                                    timestamp_ms / 1000, tz=datetime.timezone.utc
+                                )
+                                item["user_info"]["register_date"] = product_date_utc
+                            except (TypeError, ValueError):
+                                logger.warning(
+                                    f"User {item_id}: Invalid timestamp format ({timestamp_ms}). Cannot parse date."
+                                )
+                        else:
+                            logger.warning(
+                                f"User {item_id}: Missing creation/modification date."
+                            )
 
                     else:
                         logger.debug(
