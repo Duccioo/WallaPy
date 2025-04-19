@@ -54,24 +54,15 @@ Here's a basic example of how to use the main `check_wallapop` function:
 
 from wallapy import check_wallapop
 
-# Define search parameters
-product_name = "iPhone 15"
-keywords = ["pro", "128gb", "unlocked"]
-min_price = 500
-max_price = 800
-excluded_keywords = ["broken", "repair", "cracked screen", "rotto", "riparare"]
-max_items_to_fetch = 50 # Limit the number of listings to retrieve
-order_by = "price_low_to_high" # Sort by price ascending
-
 # Execute the search
 results = check_wallapop(
-    product_name=product_name,
-    keywords=keywords,
-    min_price=min_price,
-    max_price=max_price,
-    excluded_keywords=excluded_keywords,
-    max_total_items=max_items_to_fetch,
-    order_by=order_by,
+    product_name="iPhone 15",
+    keywords=["iphone", "15", "pro", "128gb", "unlocked"],
+    min_price=500,
+    max_price=800,  # Set the maximum price
+    excluded_keywords=["broken", "repair", "cracked screen", "rotto", "riparare"],
+    max_total_items=50,  # Limit the number of listings to retrieve
+    order_by="price_low_to_high",
 )
 
 # Print the found results
