@@ -118,7 +118,13 @@ class WallaPyClient:
                 or location_data.get("region")
                 or location_data.get("country_code")
             )
-            is_reserved = item.get("flags", {}).get("reserved", False)
+
+            is_reserved = item.get("reserved", {}).get("flag", False)
+            shipping_available = item.get("shipping", {}).get("item_is_shippable", None)
+
+            if is_reserved:
+                logger.debug(f"Item {product_id} is reserved. Skipping.")
+                return None
 
             if not all(
                 [
@@ -156,10 +162,6 @@ class WallaPyClient:
                 price_in_range = False
             if max_price is not None and product_price > max_price:
                 price_in_range = False
-
-            if is_reserved:
-                logger.debug(f"Item {product_id}: Skipping because it is reserved.")
-                return None
 
             full_text_for_exclusion = f"{product_title} {product_description}"
             if contains_excluded_terms(
@@ -267,6 +269,7 @@ class WallaPyClient:
                 "brand": None,
                 "model": None,
                 "user_info": {},
+                "shipping_available": shipping_available,
             }
             logger.info(f"Item {product_id} processed successfully.")
             return processed_item

@@ -16,7 +16,7 @@ from .config import LATITUDE, LONGITUDE, REQUEST_TIMEOUT, MAX_RETRIES, USER_AGEN
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,  # Changed level to INFO to see retry attempts
+    level=logging.DEBUG,  # Changed level to INFO to see retry attempts
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)  # Use __name__ for logger name
