@@ -1,6 +1,7 @@
 # filepath: /Users/duccio/Documents/GitHub/WallaPy/src/wallapy/__init__.py
-__version__ = "0.1.0"
+__version__ = "0.6.0"  # Core is async, sync wrapper provided
 
+import asyncio  # Add asyncio import
 from typing import List, Dict, Any, Optional  # Add imports for type hints
 
 from .check import WallaPyClient  # Import the client class
@@ -11,11 +12,8 @@ from .exceptions import (
     WallaPyConfigurationError,
 )
 
-# Create a default client instance for simple usage
-_default_client = WallaPyClient()
 
-
-# Define the convenience function using the default client
+# Define the synchronous convenience function using an internal client and asyncio.run()
 def check_wallapop(
     product_name: str,
     keywords: Optional[List[str]] = None,
@@ -26,12 +24,16 @@ def check_wallapop(
     order_by: str = "newest",
     time_filter: Optional[str] = None,
     verbose: int = 0,
+    deep_search: bool = True,  # Add deep_search parameter
 ) -> List[Dict[str, Any]]:
     """
-    Searches Wallapop using default configurations.
+    Synchronous wrapper to search Wallapop.
 
-    This is a convenience function that uses a pre-configured WallaPyClient.
-    For custom configurations (location, headers, etc.), instantiate WallaPyClient directly.
+    This function provides a simple, synchronous interface. It internally creates a
+    WallaPyClient and runs its asynchronous check_wallapop method using asyncio.run().
+
+    For advanced usage or integration into existing async applications,
+    instantiate WallaPyClient directly and use its async methods.
 
     Args:
         product_name: The primary name of the product to search for.
@@ -45,6 +47,7 @@ def check_wallapop(
         time_filter: Time filter ('today', 'lastWeek', 'lastMonth'). Needs API verification.
                      Defaults to None.
         verbose: Controls logging verbosity (0=WARN, 1=INFO, 2=DEBUG).
+        deep_search: Fetch detailed information for each item. Defaults to True.
 
     Returns:
         A list of dictionaries representing matching products.
@@ -55,23 +58,42 @@ def check_wallapop(
         WallaPyParsingError: If the API response cannot be parsed.
         WallaPyException: For other unexpected errors during the process.
     """
-    return _default_client.check_wallapop(
-        product_name=product_name,
-        keywords=keywords,
-        min_price=min_price,
-        max_price=max_price,
-        excluded_keywords=excluded_keywords,
-        max_total_items=max_total_items,
-        order_by=order_by,
-        time_filter=time_filter,
-        verbose=verbose,
-    )
+    # Create a temporary client instance for this call
+    client = WallaPyClient()
+
+    # Run the async check_wallapop method within the sync function
+    try:
+        # Use asyncio.run to execute the async method
+        results = asyncio.run(
+            client.check_wallapop(
+                product_name=product_name,
+                keywords=keywords,
+                min_price=min_price,
+                max_price=max_price,
+                excluded_keywords=excluded_keywords,
+                max_total_items=max_total_items,
+                order_by=order_by,
+                time_filter=time_filter,
+                verbose=verbose,
+                deep_search=deep_search,
+            )
+        )
+        return results
+    except RuntimeError as e:
+        # Handle cases where asyncio.run cannot be called (e.g., nested event loops)
+        if "cannot be called from a running event loop" in str(e):
+            raise RuntimeError(
+                "The synchronous check_wallapop wrapper cannot be called from within an existing asyncio event loop. "
+                "Instantiate WallaPyClient and use its async check_wallapop method directly in async code."
+            ) from e
+        else:
+            raise  # Re-raise other runtime errors
 
 
 # Expose the client class, the convenience function, and exceptions
 __all__ = [
     "WallaPyClient",  # Expose the class for advanced users
-    "check_wallapop",  # Expose the convenience function
+    "check_wallapop",  # Expose the synchronous convenience function
     "WallaPyException",
     "WallaPyRequestError",
     "WallaPyParsingError",

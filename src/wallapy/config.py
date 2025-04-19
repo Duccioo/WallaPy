@@ -5,9 +5,7 @@ Includes API endpoints, fuzzy matching thresholds, and default HTTP headers.
 """
 
 # Base URL for the Wallapop search API endpoint
-BASE_URL_WALLAPOP = (
-    "https://api.wallapop.com/api/v3/search"  # Updated based on common usage
-)
+BASE_URL_WALLAPOP = "https://api.wallapop.com/api/v3"  # Updated based on common usage
 
 # Thresholds for fuzzy string matching (0-100 scale)
 FUZZY_THRESHOLDS = {
@@ -45,3 +43,6 @@ USER_AGENTS = [
 REQUEST_TIMEOUT = 15
 MAX_RETRIES = 3
 DELAY_BETWEEN_REQUESTS = 1  # Delay in seconds between requests
+
+
+TRANSLATE = True

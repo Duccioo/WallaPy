@@ -8,10 +8,10 @@ import logging
 from typing import List, Optional, Dict, Any
 from urllib.parse import urlparse, parse_qs, urlencode
 import time
+import httpx  # Added
 
 # --- Use relative imports for modules within the same package ---
 from .request_handler import safe_request
-from .config import BASE_URL_WALLAPOP, DELAY_BETWEEN_REQUESTS
 from .utils import clean_text
 from .exceptions import WallaPyRequestError, WallaPyParsingError, WallaPyException
 from . import config  # Import config for defaults
@@ -59,7 +59,7 @@ def setup_url(
 
     # Ensure base URL doesn't have trailing slash if query starts with ?
     _base_url = _base_url.rstrip("/")
-    initial_url = f"{_base_url}?keywords={query}&latitude={_latitude}&longitude={_longitude}&source=search_box"
+    initial_url = f"{_base_url}/search?keywords={query}&latitude={_latitude}&longitude={_longitude}&source=search_box"
 
     # Add price filters (Wallapop API uses integers for price parameters)
     if min_price is not None:
@@ -245,3 +245,100 @@ def fetch_wallapop_items(
 
     logger.info(f"Finished fetching. Total items collected: {len(all_items_data)}")
     return all_items_data
+
+
+def fetch_user_info(user_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
+    """
+    Fetches user information from the Wallapop API.
+
+    Args:
+        user_id: The ID of the user to fetch information for.
+
+    Returns:
+        A dictionary containing user information.
+
+    Raises:
+        WallaPyRequestError: If the request fails after retries.
+        WallaPyParsingError: If the response cannot be parsed or lacks expected structure.
+    """
+    # Construct the URL for fetching user info
+    url = f"{config.BASE_URL_WALLAPOP}/users/{user_id}"
+
+    # Fetch the user data
+    response = safe_request(url, headers=headers)
+
+    if response is None:
+        error_msg = (
+            f"Failed to fetch user info for ID {user_id} after multiple retries."
+        )
+        logger.error(error_msg)
+        raise WallaPyRequestError(error_msg)  # Lancia eccezione specifica
+
+    if response.status_code != 200:
+        error_msg = (
+            f"Failed API request to Wallapop for user ID {user_id}. "
+            f"Status Code: {response.status_code}. URL: {url}"
+        )
+        logger.error(error_msg)
+        try:
+            logger.error(f"Response body: {response.text[:500]}...")
+        except Exception:
+            logger.error("Could not read response body.")
+        raise WallaPyRequestError(error_msg)  # Lancia eccezione specifica
+
+    try:
+        data = response.json()
+        return data
+    except json.JSONDecodeError as e:
+        decode_error_msg = f"Error decoding JSON response for user ID {user_id}: {e}. Response text: {response.text[:500]}..."
+        logger.error(decode_error_msg)
+        raise WallaPyParsingError(decode_error_msg) from e  # Lancia eccezione specifica
+
+
+async def fetch_user_info_async(
+    client: httpx.AsyncClient,
+    user_id: str,
+    headers: Optional[Dict[str, str]] = None,
+) -> Optional[Dict[str, Any]]:
+    """
+    Fetches user information from the Wallapop API asynchronously.
+
+    Args:
+        client: An active httpx.AsyncClient instance.
+        user_id: The ID of the user to fetch.
+        headers: Optional dictionary of HTTP headers for the request.
+
+    Returns:
+        A dictionary containing user information, or None if an error occurs.
+    """
+    if not user_id:
+        logger.warning("fetch_user_info_async called with no user_id.")
+        return None
+
+    user_api_url = (
+        f"{config.BASE_URL_WALLAPOP}/users/{user_id}"  # Use config for BASE_URL
+    )
+    request_headers = headers or config.HEADERS  # Use passed headers or default
+
+    logger.debug(f"Fetching user info for {user_id} from {user_api_url}")
+    try:
+        # Use the passed httpx client
+        response = await client.get(user_api_url, headers=request_headers, timeout=10)
+        response.raise_for_status()  # Raise exception for status >= 400
+        user_data = response.json()
+        logger.debug(f"Successfully fetched user info for {user_id}")
+        return user_data
+    except httpx.HTTPStatusError as e:
+        logger.error(
+            f"HTTP error fetching user {user_id}: Status {e.response.status_code} - {e.response.text}"
+        )
+        return None
+    except httpx.RequestError as e:
+        logger.error(f"Request error fetching user {user_id}: {e}")
+        return None
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to decode JSON response for user {user_id}: {e}")
+        return None
+    except Exception as e:
+        logger.exception(f"Unexpected error fetching user info for {user_id}: {e}")
+        return None

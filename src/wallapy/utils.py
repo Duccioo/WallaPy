@@ -100,4 +100,4 @@ def make_link(web_slug: Optional[str]) -> Optional[str]:
     if not web_slug:
         return None
     # Assuming the base URL structure for items
-    return f"https://it.wallapop.com/item/{web_slug}"
+    return f"https://wallapop.com/item/{web_slug}"

@@ -8,7 +8,13 @@ process individual items, and filter them according to requirements.
 import datetime
 import logging
 from typing import List, Dict, Any, Optional
+import time  # Import time for potential delays
+import json  # Import json module
+import asyncio
+import httpx  # Add httpx import
 
+import requests  # Add requests import
+from bs4 import BeautifulSoup  # Add BeautifulSoup import
 from fuzzywuzzy import fuzz
 
 # --- Use relative imports for modules within the same package ---
@@ -18,7 +24,8 @@ from .exceptions import (
     WallaPyException,
     WallaPyRequestError,
 )
-from .fetch_api import fetch_wallapop_items, setup_url
+from .fetch_api import fetch_wallapop_items, setup_url, fetch_user_info
+from .fetch_api import fetch_user_info_async  # Import async version
 from .utils import clean_text, contains_excluded_terms, make_link, validate_prices, tmz
 
 logger = logging.getLogger(__name__)
@@ -44,6 +51,7 @@ class WallaPyClient:
         fuzzy_thresholds: Optional[Dict[str, int]] = None,
         delay_between_requests: Optional[int] = None,
         base_url: Optional[str] = None,
+        translate: Optional[bool] = None,
     ):
         """
         Initializes the WallaPyClient with custom or default configurations.
@@ -70,6 +78,8 @@ class WallaPyClient:
             else config.DELAY_BETWEEN_REQUESTS
         )
         self.base_url = base_url if base_url is not None else config.BASE_URL_WALLAPOP
+
+        self.translate = translate if translate is not None else config.TRANSLATE
 
         logger.debug(
             f"WallaPyClient initialized with: lat={self.latitude}, lon={self.longitude}, delay={self.delay_between_requests}"
@@ -250,6 +260,13 @@ class WallaPyClient:
                 "all_images": all_image_urls,
                 "matched_in_description": matched_in_description,
                 "match_score": highest_match_score,
+                "product_details": {},
+                "characteristics": None,
+                "views": None,
+                "state": None,
+                "brand": None,
+                "model": None,
+                "user_info": {},
             }
             logger.info(f"Item {product_id} processed successfully.")
             return processed_item
@@ -259,7 +276,123 @@ class WallaPyClient:
             logger.exception(f"Critical error processing item {item_id_str}: {e}")
             return None
 
-    def check_wallapop(
+    async def _get_details(
+        self, item: Dict[str, Any], client: httpx.AsyncClient
+    ) -> Dict[str, Any]:
+        """
+        Fetches and parses detailed information about a Wallapop item asynchronously,
+        prioritizing embedded JSON data (__NEXT_DATA__).
+
+        Args:
+            item: The dictionary representing the processed item, must contain the 'link'.
+            client: An active httpx.AsyncClient instance.
+
+            translate: Flag to indicate whether to translate the description and title.
+        Returns:
+            The input item dictionary updated with detailed information if found.
+        """
+        translate = self.translate
+        item_id = item.get("id", "UNKNOWN_ID")
+        url = item.get("link")
+
+        if not url:
+            logger.warning(f"Item {item_id}: Missing link, cannot fetch details.")
+            return item
+
+        logger.debug(f"Fetching details for item {item_id} from {url}")
+        try:
+            headers = self.headers or config.HEADERS
+            response = await client.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+
+            soup = BeautifulSoup(response.content, "lxml")
+
+            # --- Try extracting data from __NEXT_DATA__ JSON ---
+            next_data_script = soup.find(
+                "script", id="__NEXT_DATA__", type="application/json"
+            )
+            details_found_in_json = False
+
+            if next_data_script:
+                try:
+                    next_data = json.loads(next_data_script.string)
+
+                    item_data = (
+                        next_data.get("props", {}).get("pageProps", {}).get("item", {})
+                    )
+
+                    if item_data:
+                        if translate:
+                            item["title"] = (
+                                item_data.get("title").get("translated")
+                                if item_data.get("title").get("translated") is not None
+                                else item_data.get("title").get("original")
+                            )
+                            item["description"] = (
+                                item_data.get("description").get("translated")
+                                if item_data.get("description").get("translated")
+                                is not None
+                                else item_data.get("description").get("original")
+                            )
+
+                        item["model"] = item_data.get("model")
+                        item["state"] = item_data.get("state")
+                        item["brand"] = item_data.get("brand")
+                        item["characteristics"] = item_data.get("characteristics")
+                        item["views"] = item_data.get("views")
+                        item["product_details"] = item_data
+
+                        # Fetch user info asynchronously
+                        user_info = await fetch_user_info_async(
+                            client=client,
+                            user_id=item_data.get("userId"),
+                        )
+
+                        item["user_info"] = {
+                            "userId": user_info.get("id"),
+                            "username": user_info.get("micro_name"),
+                            "profile_picture": user_info.get("image", {})
+                            .get("urls_by_size", {})
+                            .get("large"),
+                            "city": user_info.get("location").get("city"),
+                            "link": user_info.get("url_share"),
+                            "register_date": user_info.get("register_date"),
+                            "is_top_profile": user_info.get("is_top_profile"),
+                        }
+
+                        details_found_in_json = True
+
+                    else:
+                        logger.debug(
+                            f"Item {item_id}: 'item' data not found within pageProps in JSON."
+                        )
+
+                except json.JSONDecodeError:
+                    logger.warning(
+                        f"Item {item_id}: Failed to decode __NEXT_DATA__ JSON."
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Item {item_id}: Error processing __NEXT_DATA__ JSON: {e}"
+                    )
+            else:
+                logger.warning(
+                    f"Item {item_id}: __NEXT_DATA__ script tag not found. Details might be missing."
+                )
+
+            if not details_found_in_json:
+                logger.warning(
+                    f"Item {item_id}: Could not extract detailed description or characteristics from JSON."
+                )
+
+        except httpx.RequestError as e:
+            logger.error(f"Item {item_id}: Failed to fetch details from {url}: {e}")
+        except Exception as e:
+            logger.exception(f"Item {item_id}: Error parsing details page {url}: {e}")
+
+        return item
+
+    async def check_wallapop(
         self,
         product_name: str,
         keywords: Optional[List[str]] = None,
@@ -270,9 +403,10 @@ class WallaPyClient:
         order_by: str = "newest",
         time_filter: Optional[str] = None,
         verbose: int = 0,
+        deep_search: bool = True,
     ) -> List[Dict[str, Any]]:
         """
-        Main instance method to search Wallapop and return a list of items matching the criteria.
+        Main async instance method to search Wallapop and return a list of items matching the criteria.
 
         Uses configuration (location, headers, delays) stored in the client instance.
         Orchestrates URL setup, API fetching, item processing, and filtering.
@@ -367,6 +501,7 @@ class WallaPyClient:
         processed_ids = set()
 
         for item in raw_items_data:
+
             item_id = item.get("id")
             if not item_id or item_id in processed_ids:
                 logger.debug(f"Skipping item with duplicate or missing ID: {item_id}")
@@ -385,9 +520,42 @@ class WallaPyClient:
                 if processed_product:
                     valid_products.append(processed_product)
                     processed_ids.add(item_id)
+                    if deep_search:
+                        # Details will be fetched concurrently later
+                        pass
+
             except Exception as e:
                 item_id_str = item.get("id", "UNKNOWN_ID")
                 logger.error(f"Error processing item {item_id_str}: {e}", exc_info=True)
+
+        # --- Deep Search (Concurrent Detail Fetching) ---
+        if deep_search and valid_products:
+            logger.info(
+                f"Deep search enabled. Fetching details for {len(valid_products)} items concurrently."
+            )
+            tasks = []
+            async with httpx.AsyncClient(
+                headers=self.headers, follow_redirects=True
+            ) as client:
+                for i, product in enumerate(valid_products):
+                    tasks.append(
+                        asyncio.create_task(
+                            self._get_details(product, client),
+                            name=f"get_details_{product.get('id', i)}",
+                        )
+                    )
+
+                detailed_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            # Update valid_products with detailed results, handling potential errors
+            valid_products = [
+                res for res in detailed_results if not isinstance(res, Exception)
+            ]
+            # Log errors for tasks that failed
+            for i, res in enumerate(detailed_results):
+                if isinstance(res, Exception):
+                    task_name = tasks[i].get_name()  # Requires Python 3.8+
+                    logger.error(f"Error during deep search task '{task_name}': {res}")
 
         logger.info(
             f"Processing complete. Found {len(valid_products)} valid products matching all criteria."
