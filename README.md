@@ -51,67 +51,41 @@ Using a virtual environment is recommended.
 Here's a basic example of how to use the main `check_wallapop` function:
 
 ```python
-import logging
-# Import directly from the installed package
-from wallapy import (
-    check_wallapop,
-    WallaPyException,
-    WallaPyRequestError,
-    WallaPyConfigurationError,
-)
 
-# Configure logging for better visibility
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from wallapy import check_wallapop
 
 # Define search parameters
-product_name = "iPhone 13"
+product_name = "iPhone 15"
 keywords = ["pro", "128gb", "unlocked"]
 min_price = 500
 max_price = 800
 excluded_keywords = ["broken", "repair", "cracked screen", "rotto", "riparare"]
 max_items_to_fetch = 50 # Limit the number of listings to retrieve
 order_by = "price_low_to_high" # Sort by price ascending
-# time_filter = "lastWeek" # Search for listings from the last week (verify API parameter)
 
 # Execute the search
-try:
-    results = check_wallapop(
-        product_name=product_name,
-        keywords=keywords,
-        min_price=min_price,
-        max_price=max_price,
-        excluded_keywords=excluded_keywords,
-        max_total_items=max_items_to_fetch,
-        order_by=order_by,
-        # time_filter=time_filter # Uncomment if using the time filter
-    )
+results = check_wallapop(
+    product_name=product_name,
+    keywords=keywords,
+    min_price=min_price,
+    max_price=max_price,
+    excluded_keywords=excluded_keywords,
+    max_total_items=max_items_to_fetch,
+    order_by=order_by,
+)
 
-    # Print the found results
-    if results:
-        print(f"\nFound {len(results)} matching listings:")
-        for ad in results:
-            print("-" * 20)
-            print(f"Title: {ad['title']}")
-            print(f"Price: {ad['price']} {ad.get('currency', '')}")
-            # Format the date if available
-            date_str = ad['creation_date_local'].strftime('%Y-%m-%d %H:%M') if ad.get('creation_date_local') else "N/A"
-            print(f"Date: {date_str}")
-            print(f"Location: {ad.get('location', 'N/A')}")
-            print(f"Link: {ad['link']}")
-            print(f"Score: {ad.get('match_score', 'N/A')}")
-            print(f"Image: {ad.get('main_image', 'N/A')}")
-    else:
-        print("\nNo listings found matching the specified criteria.")
+# Print the found results
+if results:
+    print(f"\nFound {len(results)} matching listings:")
+    for ad in results:
+        print("-" * 20)
+        print(f"Title: {ad['title']}")
+        print(f"Price: {ad['price']} {ad.get('currency', '')}")
+        # Format the date if available
+        date_str = ad['creation_date_local'].strftime('%Y-%m-%d %H:%M') if ad.get('creation_date_local') else "N/A"
+else:
+    print("\nNo listings found matching the specified criteria.")
 
-except WallaPyConfigurationError as e:
-    print(f"\nConfiguration Error: {e}")
-except WallaPyRequestError as e:
-    print(f"\nAPI Request Error: {e}")
-except WallaPyException as e: # Catch other WallaPy-specific exceptions
-    print(f"\nWallaPy Error: {e}")
-except Exception as e:
-    print(f"\nUnexpected Error: {e}")
-    logging.exception("Error during check_wallapop execution:")
 
 ```
 
