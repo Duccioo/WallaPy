@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "wallapy"
 version = "0.1.0"
 authors = [
-  { name="duccioo", email="your_email@example.com" }, # Sostituisci con la tua email se vuoi
+  { name="duccioo", email="meconcelliduccio@gmail.com" }, # Sostituisci con la tua email se vuoi
 ]
 description = "A Python tool to search Wallapop items."
 readme = "README.md"

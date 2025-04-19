@@ -13,7 +13,7 @@ product_name = "ps5"
 keywords = ["console", "playstation", "ps5", "playstation 5"]
 min_price = 100
 max_price = 200
-max_items_to_fetch = 50  # Limit the number of ads to retrieve
+max_items_to_fetch = 10  # Limit the number of ads to retrieve
 # order_by = "price_low_to_high"  # Sort by price ascending
 time_filter = "lastWeek"
 

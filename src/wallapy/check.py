@@ -20,7 +20,15 @@ from .exceptions import (
     WallaPyRequestError,
 )  # Importa l'eccezione corretta
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(
+    __name__
+)  # Use 'wallapy' to get the root logger for the package if configured elsewhere
+# Basic configuration if run standalone, might be overridden by application config
+if not logger.hasHandlers():
+    logging.basicConfig(
+        level=logging.WARNING,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
 
 
 def process_wallapop_item(
@@ -237,6 +245,7 @@ def check_wallapop(
     max_total_items: int = 100,
     order_by: str = "newest",
     time_filter: Optional[str] = None,
+    verbose: int = 0,  # Added verbose parameter
 ) -> List[Dict[str, Any]]:
     """
     Main function to search Wallapop and return a list of items matching the criteria.
@@ -254,6 +263,11 @@ def check_wallapop(
                   Defaults to 'newest'.
         time_filter: Time filter ('today', 'lastWeek', 'lastMonth'). Needs API verification.
                      Defaults to None.
+        verbose: Controls the logging verbosity level:
+                 0: WARNING level (default)
+                 1: INFO level
+                 2: DEBUG level
+                 3: DEBUG level (currently same as 2)
 
     Returns:
         A list of dictionaries, where each dictionary represents a valid product
@@ -266,9 +280,31 @@ def check_wallapop(
         WallaPyParsingError: If the API response cannot be parsed.
         WallaPyException: For other unexpected errors during the process.
     """
+    # --- Configure Logging Level based on verbose ---
+    if verbose == 0:
+        log_level = logging.WARNING
+    elif verbose == 1:
+        log_level = logging.INFO
+    elif verbose >= 2:  # Treat 2 and 3 (and higher) as DEBUG
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.WARNING  # Default to WARNING for invalid values
+
+    # Configure the logger for the 'wallapy' package or just the current module
+    # This assumes you want to affect all loggers within 'wallapy' if they inherit
+    package_logger = logging.getLogger(
+        "wallapy"
+    )  # Get the parent logger if using hierarchical logging
+    package_logger.setLevel(log_level)
+    # If using basicConfig or want to ensure the handler level is also set:
+    for handler in (
+        package_logger.handlers or logging.getLogger().handlers
+    ):  # Check package logger handlers or root handlers
+        handler.setLevel(log_level)
+
     logger.info(f"Starting Wallapop check for '{product_name}'")
     logger.debug(
-        f"Parameters: keywords={keywords}, price=({min_price}-{max_price}), excluded={excluded_keywords}, max_items={max_total_items}, order={order_by}, time={time_filter}"
+        f"Parameters: keywords={keywords}, price=({min_price}-{max_price}), excluded={excluded_keywords}, max_items={max_total_items}, order={order_by}, time={time_filter}, verbose={verbose}"
     )
 
     # --- Input Validation and Cleaning ---
