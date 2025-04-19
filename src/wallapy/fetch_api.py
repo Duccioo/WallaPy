@@ -7,12 +7,14 @@ import json
 import logging
 from typing import List, Optional, Dict, Any
 from urllib.parse import urlparse, parse_qs, urlencode
+import time
 
 # --- Use relative imports for modules within the same package ---
 from .request_handler import safe_request
-from .config import BASE_URL_WALLAPOP
+from .config import BASE_URL_WALLAPOP, DELAY_BETWEEN_REQUESTS
 from .utils import clean_text
 from .exceptions import WallaPyRequestError, WallaPyParsingError, WallaPyException
+from . import config  # Import config for defaults
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +25,9 @@ def setup_url(
     max_price: Optional[float] = None,
     order_by: str = "newest",
     time_filter: Optional[str] = None,
+    latitude: Optional[float] = None,  # Add latitude parameter
+    longitude: Optional[float] = None,  # Add longitude parameter
+    base_url: Optional[str] = None,  # Add base_url parameter
 ) -> str:
     """
     Constructs the initial search URL for the Wallapop API.
@@ -34,25 +39,27 @@ def setup_url(
         order_by: Sorting criteria ('newest', 'price_low_to_high', 'price_high_to_low').
                   Defaults to 'newest'.
         time_filter: Time filter for listings ('today', 'lastWeek', 'lastMonth').
-                     Wallapop API seems to use 'publish_date' or similar,
-                     needs verification. This implementation uses a placeholder.
                      Defaults to None.
+        latitude: Latitude for the search. Defaults to config.LATITUDE.
+        longitude: Longitude for the search. Defaults to config.LONGITUDE.
+        base_url: Base URL for the API. Defaults to config.BASE_URL_WALLAPOP.
 
     Returns:
         The constructed URL string for the API request.
-
-    Raises:
-        ValueError: If invalid `order_by` or `time_filter` values are provided
-                    (currently only logs warnings).
     """
+    # Use provided values or fall back to config defaults
+    _latitude = latitude if latitude is not None else config.LATITUDE
+    _longitude = longitude if longitude is not None else config.LONGITUDE
+    _base_url = base_url if base_url is not None else config.BASE_URL_WALLAPOP
 
     # Clean inputs
     product_name_cleaned = clean_text(product_name)
     product_name_cleaned = product_name_cleaned.replace(" ", "%20")
     query = product_name_cleaned
+
     # Ensure base URL doesn't have trailing slash if query starts with ?
-    base_url = BASE_URL_WALLAPOP.rstrip("/")
-    initial_url = f"{base_url}?source=search_box&keywords={query}"
+    _base_url = _base_url.rstrip("/")
+    initial_url = f"{_base_url}?keywords={query}&latitude={_latitude}&longitude={_longitude}&source=search_box"
 
     # Add price filters (Wallapop API uses integers for price parameters)
     if min_price is not None:
@@ -68,15 +75,19 @@ def setup_url(
         logger.warning(f"Invalid order_by value '{order_by}'. Using default 'newest'.")
         initial_url += "&order_by=newest"  # Default to newest if invalid
 
+    # Add time filter if provided (ensure API supports this parameter name)
     if time_filter:
-        initial_url += f"&time_filter={time_filter}"
+        initial_url += f"&time_filter={time_filter}"  # Placeholder name
 
     logger.debug(f"Constructed URL: {initial_url}")
     return initial_url
 
 
 def fetch_wallapop_items(
-    initial_url: str, headers: Dict[str, str], max_total_items: int
+    initial_url: str,
+    headers: Dict[str, str],
+    max_total_items: int,
+    delay_between_requests: int,
 ) -> List[Dict[str, Any]]:
     """
     Fetches items from the Wallapop API, handling pagination and item limits.
@@ -85,6 +96,7 @@ def fetch_wallapop_items(
         initial_url: The starting URL for the search (obtained from `setup_url`).
         headers: HTTP headers to use for the requests.
         max_total_items: The maximum number of items to retrieve before stopping.
+        delay_between_requests: Delay in seconds between requests.
 
     Returns:
         A list of raw item data dictionaries fetched from the API.
@@ -147,13 +159,9 @@ def fetch_wallapop_items(
                 items_on_page = []
 
             if items_on_page:
-                num_items_on_page = len(items_on_page)
                 items_to_add = items_on_page[: max_total_items - items_fetched_count]
                 all_items_data.extend(items_to_add)
                 items_fetched_count = len(all_items_data)
-                # logger.info(
-                #     f"  Found {num_items_on_page} items on page {page_count}. Total collected: {items_fetched_count}"
-                # )
 
                 if items_fetched_count >= max_total_items:
                     logger.info(
@@ -225,6 +233,9 @@ def fetch_wallapop_items(
             raise WallaPyException(
                 unexpected_error_msg
             ) from e  # Incapsula in eccezione generica
+
+        # add a small delay to avoid overwhelming the server
+        time.sleep(delay_between_requests)
 
     if len(all_items_data) > max_total_items:
         logger.warning(

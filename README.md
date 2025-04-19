@@ -9,7 +9,7 @@ Developed by [duccioo](https://github.com/duccioo) ✨
 *   **Advanced Search:** Search for items on Wallapop by product name and additional keywords.
 *   **Multiple Filters:**
     *   Filter by price range (minimum and maximum). 💰
-    *   Filter by publication period (`today`, `lastWeek`, `lastMonth` - *Note: API parameter needs verification*). 📅
+    *   Filter by publication period (`today`, `lastWeek`, `lastMonth` ) 📅
     *   Exclude listings containing specific keywords (supports fuzzy matching). 🚫
 *   **Sorting:** Sort results by newest (`newest`), price ascending (`price_low_to_high`), or price descending (`price_high_to_low`). 📊
 *   **Pagination Handling:** Automatically retrieves multiple pages of results up to a specified limit. 📄
@@ -72,8 +72,7 @@ if results:
         print("-" * 20)
         print(f"Title: {ad['title']}")
         print(f"Price: {ad['price']} {ad.get('currency', '')}")
-        # Format the date if available
-        date_str = ad['creation_date_local'].strftime('%Y-%m-%d %H:%M') if ad.get('creation_date_local') else "N/A"
+        print(f"Link: {ad['link']}")
 else:
     print("\nNo listings found matching the specified criteria.")
 

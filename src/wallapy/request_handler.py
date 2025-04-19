@@ -12,43 +12,23 @@ from typing import Optional, Dict, Any
 
 
 # ---
-from .config import LATITUDE, LONGITUDE  # Import default coordinates from config
+from .config import LATITUDE, LONGITUDE, REQUEST_TIMEOUT, MAX_RETRIES, USER_AGENTS
 
 # Configure logging
-# Consider using a more specific logger name if this becomes part of a larger application
 logging.basicConfig(
     level=logging.INFO,  # Changed level to INFO to see retry attempts
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)  # Use __name__ for logger name
 
-# Expanded list of common user agents
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.2 Safari/605.1.15",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:97.0) Gecko/20100101 Firefox/97.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
-    "Mozilla/5.0 (iPad; CPU OS 15_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/98.0.4758.85 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 15_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.2 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.101 Mobile Safari/537.36",
-]
 
 # Configure session with automatic retries
 # Increased backoff factor slightly for more delay between retries
 retry_strategy = Retry(
-    total=3,
+    total=MAX_RETRIES,  # Total number of retries
     backoff_factor=1.5,  # Increased backoff factor
     status_forcelist=[429, 500, 502, 503, 504],  # Status codes to trigger retry
-    allowed_methods=[
-        "HEAD",
-        "GET",
-        "POST",
-        "PUT",
-        "DELETE",
-        "OPTIONS",
-        "TRACE",
-    ],  # Retry on all idempotent methods + GET/POST
+    allowed_methods=["HEAD", "GET", "POST", "PUT", "DELETE", "OPTIONS", "TRACE"],
 )
 
 # Create a global session object
@@ -62,11 +42,13 @@ session.mount("http://", adapter)
 
 def safe_request(
     url: str,
-    timeout: int = 15,  # Increased default timeout
+    timeout: int = REQUEST_TIMEOUT,  # Increased default timeout
     method: str = "GET",
     data: Optional[Dict[str, Any]] = None,
     params: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
+    latitude: Optional[float] = LATITUDE,
+    longitude: Optional[float] = LONGITUDE,
 ) -> Optional[requests.Response]:
     """
     Performs an HTTP request using the pre-configured session with retries,
@@ -85,10 +67,10 @@ def safe_request(
         A requests.Response object on success, or None if the request fails
         after all retries configured in the session.
     """
-    # Generate random coordinates near Siena (consider making location configurable)
+    # Generate random coordinates (consider making location configurable)
     # Wallapop uses these to tailor results, but their exact impact varies.
-    latitude = LATITUDE + random.uniform(-0.05, 0.05)
-    longitude = LONGITUDE + random.uniform(-0.05, 0.05)
+    latitude = latitude + random.uniform(-0.05, 0.05)
+    longitude = longitude + random.uniform(-0.05, 0.05)
 
     # Initialize parameters, adding location
     current_params = params or {}
@@ -104,9 +86,7 @@ def safe_request(
     if headers:
         request_headers.update(headers)
 
-    # The retry logic is now primarily handled by the session adapter's Retry strategy.
     # We make a single request call here, and requests/urllib3 handles retries internally.
-
     logger.debug(f"Attempting {method} {url[:50]}...")  # Log URL, truncate if too long
 
     if data:
