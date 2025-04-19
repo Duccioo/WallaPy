@@ -21,7 +21,17 @@ Developed by [duccioo](https://github.com/duccioo) ✨
 
 ## Installation 🛠️
 
-Using a virtual environment is recommended.
+**Using pip (Recommended):**
+
+The easiest way to install WallaPy is directly from PyPI:
+
+```bash
+pip install wallapy
+```
+
+**From Source (for development):**
+
+If you want to contribute or install the latest development version, you can install from source. Using a virtual environment is recommended.
 
 1.  **Clone the repository:**
     ```bash
@@ -41,7 +51,7 @@ Using a virtual environment is recommended.
     ```bash
     pip install .
     ```
-    Or, to install in editable mode (useful for development):
+    Or, to install in editable mode:
     ```bash
     pip install -e .
     ```
