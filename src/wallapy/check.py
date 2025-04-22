@@ -343,7 +343,6 @@ class WallaPyClient:
                             client=client,
                             user_id=item_data.get("userId"),
                         )
-                        
 
                         item["user_info"] = {
                             "userId": user_info.get("id"),
@@ -531,9 +530,6 @@ class WallaPyClient:
                 if processed_product:
                     valid_products.append(processed_product)
                     processed_ids.add(item_id)
-                    if deep_search:
-                        # Details will be fetched concurrently later
-                        pass
 
             except Exception as e:
                 item_id_str = item.get("id", "UNKNOWN_ID")
