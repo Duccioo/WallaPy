@@ -17,6 +17,8 @@ dependencies = [
     "pytz (>=2025.2,<2026.0)"
 ]
 
+[project.urls]
+Repository = "https://github.com/duccioo/WallaPy"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
