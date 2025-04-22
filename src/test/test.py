@@ -1,5 +1,4 @@
-# Esempio: run_check.py (nella root del progetto)
-from wallapy import check_wallapop  # Importa il client
+from wallapy import check_wallapop
 import time
 
 # Define search parameters
@@ -38,7 +37,7 @@ def main():
     if results:
         print(f"\nFound {len(results)} matching ads:")
         for ad in results:
-            print("-" * 20)
+            print("-" * 60)
             print(f"Title: {ad['title']}")
             print(f"Price: {ad['price']} {ad.get('currency', '')}")
             # Format date nicely if available
@@ -51,12 +50,17 @@ def main():
             print(f"Location: {ad.get('location', 'N/A')}")
             print(f"Link: {ad['link']}")
             print(f"Score: {ad.get('match_score', 'N/A')}")
+            # ---
             user_info = ad.get("user_info", {})
+            register_date_str = (
+                user_info.get("register_date").strftime("%Y-%m-%d %H:%M")
+                if user_info.get("register_date")
+                else "N/A"
+            )
+
             print(f"Username: {user_info.get('username', 'N/A')}")
             print(f"User link : {user_info.get('link', 'N/A')}")
-            print(
-                f"User register date: {user_info.get('register_date', 'N/A').strftime("%Y-%m-%d %H:%M")}"
-            )
+            print(f"User register date: {register_date_str}")
     else:
         print("\nNo ads found matching the specified criteria.")
 

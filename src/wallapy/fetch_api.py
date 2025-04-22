@@ -235,7 +235,7 @@ def fetch_wallapop_items(
             ) from e  # Incapsula in eccezione generica
 
         # add a small delay to avoid overwhelming the server
-        time.sleep(delay_between_requests)
+        time.sleep(delay_between_requests / 1000.0)
 
     if len(all_items_data) > max_total_items:
         logger.warning(
@@ -323,7 +323,7 @@ async def fetch_user_info_async(
     logger.debug(f"Fetching user info for {user_id} from {user_api_url}")
     try:
         # Use the passed httpx client
-        response = await client.get(user_api_url, headers=request_headers, timeout=10)
+        response = await client.get(user_api_url, headers=request_headers)
         response.raise_for_status()  # Raise exception for status >= 400
         user_data = response.json()
         logger.debug(f"Successfully fetched user info for {user_id}")

@@ -22,7 +22,7 @@ from .exceptions import (
     WallaPyException,
     WallaPyRequestError,
 )
-from .fetch_api import fetch_wallapop_items, setup_url, fetch_user_info
+from .fetch_api import fetch_wallapop_items, setup_url
 from .fetch_api import fetch_user_info_async  # Import async version
 from .utils import clean_text, contains_excluded_terms, make_link, validate_prices, tmz
 
@@ -59,7 +59,7 @@ class WallaPyClient:
             longitude: Longitude for location-based searches. Defaults to config.LONGITUDE.
             headers: HTTP headers for API requests. Defaults to config.HEADERS.
             fuzzy_thresholds: Thresholds for fuzzy matching. Defaults to config.FUZZY_THRESHOLDS.
-            delay_between_requests: Delay in seconds between API requests. Defaults to config.DELAY_BETWEEN_REQUESTS.
+            delay_between_requests: Delay in milliseconds between API requests. Defaults to config.DELAY_BETWEEN_REQUESTS.
             base_url: Base URL for the Wallapop API. Defaults to config.BASE_URL_WALLAPOP.
         """
         self.latitude = latitude if latitude is not None else config.LATITUDE
@@ -343,6 +343,7 @@ class WallaPyClient:
                             client=client,
                             user_id=item_data.get("userId"),
                         )
+                        
 
                         item["user_info"] = {
                             "userId": user_info.get("id"),

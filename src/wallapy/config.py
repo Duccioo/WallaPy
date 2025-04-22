@@ -42,7 +42,6 @@ USER_AGENTS = [
 # Consider adding other configurations like timeouts, retry counts etc. here
 REQUEST_TIMEOUT = 15
 MAX_RETRIES = 3
-DELAY_BETWEEN_REQUESTS = 1  # Delay in seconds between requests
-
+DELAY_BETWEEN_REQUESTS = 500  # Delay in milliseconds between requests
 
 TRANSLATE = True
