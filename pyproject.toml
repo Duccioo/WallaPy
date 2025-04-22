@@ -1,40 +1,23 @@
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "wallapy"
-version = "0.5.2"
+version = "0.6.0"
+description = "A Python tool to search Wallapop items"
 authors = [
-  { name="duccioo", email="meconcelliduccio@gmail.com" }, # Sostituisci con la tua email se vuoi
+    {name = "Duccioo",email = "meconcelliduccio@hotmail.it"}
 ]
-description = "A Python tool to search Wallapop items."
+license = {text = "Apache License 2.0"}
 readme = "README.md"
-license = { text = "Apache-2.0" }
-requires-python = ">=3.8" # Specifica una versione minima di Python
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License",
-    "Operating System :: OS Independent",
-    "Intended Audience :: Developers",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Internet",
-]
+requires-python = ">=3.12"
 dependencies = [
-    "certifi==2025.1.31",
-    "charset-normalizer==3.4.1",
-    "fuzzywuzzy==0.18.0",
-    "idna==3.10",
-    "Levenshtein==0.27.1", # Nota: python-Levenshtein è un wrapper, Levenshtein è la libreria C
-    "pytz==2025.2", # Aggiunta dipendenza mancante
-    "RapidFuzz==3.13.0",
-    "requests==2.32.3",
-    "urllib3==2.4.0",
+    "requests (>=2.32.3,<3.0.0)",
+    "beautifulsoup4 (>=4.13.4,<5.0.0)",
+    "httpx (>=0.28.1,<0.29.0)",
+    "lxml (>=5.3.2,<6.0.0)",
+    "levenshtein (>=0.27.1,<0.28.0)",
+    "pytz (>=2025.2,<2026.0)"
 ]
 
-[project.urls]
-Homepage = "https://github.com/duccioo/WallaPy"
-Repository = "https://github.com/duccioo/WallaPy"
 
-[tool.setuptools.packages.find]
-where = ["src"]  # Cerca i pacchetti nella directory src
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

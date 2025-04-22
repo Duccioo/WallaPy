@@ -1,6 +1,6 @@
 # Esempio: run_check.py (nella root del progetto)
 from wallapy import check_wallapop  # Importa il client
-
+import time
 
 # Define search parameters
 product_name = "ps5"
@@ -15,6 +15,9 @@ time_filter = "today"  # Filter for ads posted today
 def main():
     """Main async function to run the check."""
 
+    # Measure execution time
+    start_time = time.perf_counter()
+
     # Execute the search asynchronously
     results = check_wallapop(
         product_name=product_name,
@@ -23,9 +26,13 @@ def main():
         max_price=max_price,
         max_total_items=max_items_to_fetch,
         time_filter=time_filter,
-        verbose=1,  # Aggiungi verbosità per debug se necessario
+        verbose=0,  # Aggiungi verbosità per debug se necessario
         deep_search=True,  # Abilita deep search per testare i dettagli
     )
+
+    end_time = time.perf_counter()
+    elapsed_time = end_time - start_time
+    print(f"Search operation took {elapsed_time:.2f} seconds.")
 
     # Print the found results
     if results:
@@ -44,13 +51,12 @@ def main():
             print(f"Location: {ad.get('location', 'N/A')}")
             print(f"Link: {ad['link']}")
             print(f"Score: {ad.get('match_score', 'N/A')}")
-            # Stampa info utente se disponibili dal deep search
             user_info = ad.get("user_info", {})
-            print(f"User ID: {user_info.get('userId', 'N/A')}")
             print(f"Username: {user_info.get('username', 'N/A')}")
             print(f"User link : {user_info.get('link', 'N/A')}")
-            print(f"User register date: {user_info.get('register_date', 'N/A')}")
-            # print(f"Description: {ad.get('description', 'N/A')}") # Descrizione può essere lunga
+            print(
+                f"User register date: {user_info.get('register_date', 'N/A').strftime("%Y-%m-%d %H:%M")}"
+            )
     else:
         print("\nNo ads found matching the specified criteria.")
 

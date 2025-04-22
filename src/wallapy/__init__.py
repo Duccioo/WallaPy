@@ -2,6 +2,7 @@
 __version__ = "0.6.0"  # Core is async, sync wrapper provided
 
 import asyncio  # Add asyncio import
+import logging  # Import the logging module
 from typing import List, Dict, Any, Optional  # Add imports for type hints
 
 from .check import WallaPyClient  # Import the client class
@@ -58,6 +59,14 @@ def check_wallapop(
         WallaPyParsingError: If the API response cannot be parsed.
         WallaPyException: For other unexpected errors during the process.
     """
+    # Configure the asyncio logger based on verbosity to hide selector messages
+    asyncio_logger = logging.getLogger("asyncio")
+    original_level = asyncio_logger.level  # Save the original level (optional)
+
+    if verbose < 2:  # If verbosity is less than DEBUG (i.e., WARN or INFO)
+        # Temporarily set the asyncio logger level to INFO to hide DEBUG messages
+        asyncio_logger.setLevel(logging.INFO)
+
     # Create a temporary client instance for this call
     client = WallaPyClient()
 
@@ -74,7 +83,7 @@ def check_wallapop(
                 max_total_items=max_total_items,
                 order_by=order_by,
                 time_filter=time_filter,
-                verbose=verbose,
+                verbose=verbose,  # Pass verbose to the async method
                 deep_search=deep_search,
             )
         )
@@ -88,6 +97,9 @@ def check_wallapop(
             ) from e
         else:
             raise  # Re-raise other runtime errors
+    finally:
+        # Restore the original level of the asyncio logger (optional, but good practice)
+        asyncio_logger.setLevel(original_level)
 
 
 # Expose the client class, the convenience function, and exceptions

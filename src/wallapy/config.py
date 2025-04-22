@@ -9,8 +9,8 @@ BASE_URL_WALLAPOP = "https://api.wallapop.com/api/v3"  # Updated based on common
 
 # Thresholds for fuzzy string matching (0-100 scale)
 FUZZY_THRESHOLDS = {
-    "title": 75,  # Minimum score for keyword match in title
-    "description": 65,  # Minimum score for keyword match in description
+    "title": 85,  # Minimum score for keyword match in title
+    "description": 95,  # Minimum score for keyword match in description
     "excluded": 85,  # Minimum score to identify an excluded keyword
 }
 

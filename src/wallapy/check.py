@@ -8,12 +8,10 @@ process individual items, and filter them according to requirements.
 import datetime
 import logging
 from typing import List, Dict, Any, Optional
-import time  # Import time for potential delays
 import json  # Import json module
 import asyncio
 import httpx  # Add httpx import
 
-import requests  # Add requests import
 from bs4 import BeautifulSoup  # Add BeautifulSoup import
 from fuzzywuzzy import fuzz
 
@@ -78,12 +76,7 @@ class WallaPyClient:
             else config.DELAY_BETWEEN_REQUESTS
         )
         self.base_url = base_url if base_url is not None else config.BASE_URL_WALLAPOP
-
         self.translate = translate if translate is not None else config.TRANSLATE
-
-        logger.debug(
-            f"WallaPyClient initialized with: lat={self.latitude}, lon={self.longitude}, delay={self.delay_between_requests}"
-        )
 
     def _process_wallapop_item(
         self,
@@ -163,6 +156,12 @@ class WallaPyClient:
             if max_price is not None and product_price > max_price:
                 price_in_range = False
 
+            if not price_in_range:
+                logger.debug(
+                    f"Item {product_id}: Skipping, price {product_price} out of range ({min_price}-{max_price})."
+                )
+                return None
+
             full_text_for_exclusion = f"{product_title} {product_description}"
             if contains_excluded_terms(
                 full_text_for_exclusion,
@@ -203,13 +202,6 @@ class WallaPyClient:
                     logger.debug(
                         f"Item {product_id}: Skipping, no keyword match above threshold. Max score: {max(all_scores) if all_scores else 0}"
                     )
-                    return None
-
-            if not price_in_range:
-                logger.debug(
-                    f"Item {product_id}: Skipping, price {product_price} out of range ({min_price}-{max_price})."
-                )
-                return None
 
             images_data = item.get("images", [])
             main_image_url = None
@@ -325,6 +317,7 @@ class WallaPyClient:
                     )
 
                     if item_data:
+                        details_found_in_json = True
                         if translate:
                             item["title"] = (
                                 item_data.get("title").get("translated")
