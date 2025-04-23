@@ -102,6 +102,7 @@ else:
 *   `exceptions.py`: Defines custom exceptions used by the library (e.g., `WallaPyRequestError`).
 
 ## TODO
+
 - [ ] Aggiungere altri esempi di utilizzo con il client
 - [ ] Inserire lo scraping via web in caso di errore API
 - [ ] Migliorare il matching delle parole
