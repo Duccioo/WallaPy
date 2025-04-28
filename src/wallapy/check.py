@@ -92,6 +92,7 @@ class WallaPyClient:
         (Internal instance method)
         Uses fuzzy thresholds from the client instance.
         """
+
         try:
             product_id = item.get("id")
             if not product_id:
@@ -111,6 +112,7 @@ class WallaPyClient:
                 or location_data.get("region")
                 or location_data.get("country_code")
             )
+            state = location_data.get("country_code")
 
             is_reserved = item.get("reserved", {}).get("flag", False)
             shipping_available = item.get("shipping", {}).get("item_is_shippable", None)
@@ -257,7 +259,7 @@ class WallaPyClient:
                 "product_details": {},
                 "characteristics": None,
                 "views": None,
-                "state": None,
+                "state": state,
                 "brand": None,
                 "model": None,
                 "user_info": {},
@@ -332,7 +334,6 @@ class WallaPyClient:
                             )
 
                         item["model"] = item_data.get("model")
-                        item["state"] = item_data.get("state")
                         item["brand"] = item_data.get("brand")
                         item["characteristics"] = item_data.get("characteristics")
                         item["views"] = item_data.get("views")

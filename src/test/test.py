@@ -50,6 +50,8 @@ def main():
             print(f"Location: {ad.get('location', 'N/A')}")
             print(f"Link: {ad['link']}")
             print(f"Score: {ad.get('match_score', 'N/A')}")
+            print(f"Stato {ad.get('state', 'N/A')}")
+
             # ---
             user_info = ad.get("user_info", {})
             register_date_str = (
