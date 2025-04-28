@@ -1,6 +1,6 @@
 [project]
 name = "wallapy"
-version = "0.6.0"
+version = "0.6.5"
 description = "A Python tool to search Wallapop items"
 authors = [
     {name = "Duccioo",email = "meconcelliduccio@hotmail.it"}
